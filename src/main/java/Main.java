@@ -4,8 +4,8 @@ import java.util.Scanner;
 public class Main {
     public static void main(String[] args) {
         int count = 1;
-        boolean pathCorrect = true;
-        while(pathCorrect){
+        boolean endlessLoop = true;
+        while(endlessLoop){
             System.out.println("Введите путь к файлу:");
             String path = new Scanner(System.in).nextLine();
             File file = new File(path);
@@ -22,6 +22,7 @@ public class Main {
                 continue;
             }
             System.out.println("Путь указан верно. Это файл номер " + count);
+            count++;
         }
     }
 }
