@@ -25,33 +25,64 @@ public class Main {
             count++;
 
             int countLines = 0;
-            int minLine = 1024;
-            int maxLine = 0;
-            try (FileReader fileReader = new FileReader(path);
-                 BufferedReader reader = new BufferedReader(fileReader)) {
+            int yandexBotCount = 0;
+            int googleBotCount = 0;
+            try (BufferedReader reader = new BufferedReader(new FileReader(path))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    int length = line.length();
-                    if (length > 1024) {
+                    countLines++;
+                    if (line.length() > 1024) {
                         throw new ExceedingLimitOf1024CharactersException();
                     }
-                    if (length > maxLine) {
-                        maxLine = line.length();
+
+                    try {
+                        int lastQuoteIndex = line.lastIndexOf('"');
+                        int prevQuoteIndex = line.lastIndexOf('"', lastQuoteIndex - 1);
+
+                        if (lastQuoteIndex == -1 || prevQuoteIndex == -1) continue;
+                        String userAgent = line.substring(prevQuoteIndex + 1, lastQuoteIndex).trim();
+
+                        if (userAgent.startsWith("\"") && userAgent.endsWith("\"")) {
+                            userAgent = userAgent.substring(1, userAgent.length() - 1).trim();
+                        }
+
+                        int openBracket = userAgent.indexOf('(');
+                        int closeBracket = userAgent.indexOf(')');
+                        if (openBracket == -1 || closeBracket == -1) continue;
+
+                        String bracketContent = userAgent.substring(openBracket + 1, closeBracket);
+                        String[] parts = bracketContent.split(";");
+
+                        if (parts.length >= 2) {
+                            String fragment = parts[1].trim();
+                            int slashIndex = fragment.indexOf('/');
+                            String programName;
+                            if (slashIndex != -1) {
+                                programName = fragment.substring(0, slashIndex);
+                            } else {
+                                programName = fragment;
+                            }
+                            if ("YandexBot".equals(programName)) {
+                                yandexBotCount++;
+                            } else if ("Googlebot".equals(programName)) {
+                                googleBotCount++;
+                            }
+                        }
+                    } catch (Exception e) {
+                        continue;
                     }
-                    if (length < minLine) {
-                        minLine = length;
-                    }
-                    countLines++;
                 }
-                if (minLine == 1024) {
-                    minLine = 0;
+                System.out.println("Общее количество строк в файле: " + countLines);
+                if (countLines > 0) {
+                    System.out.println("Запросов от YandexBot: " + yandexBotCount +
+                            " (" + Math.round((double) yandexBotCount / countLines * 100) + "%)");
+                    System.out.println("Запросов от Googlebot: " + googleBotCount +
+                            " (" + Math.round((double) googleBotCount / countLines * 100) + "%)");
                 }
-                System.out.println("Общее количество строк в файле : " + countLines);
-                System.out.println("Длина самой короткой строки в файле : " + minLine);
-                System.out.println("Длина самой длинной строки в файле : " + maxLine);
+
             } catch (IOException ex) {
                 System.err.println("Ошибка при чтении файла: " + ex.getMessage());
-            } catch (ExceedingLimitOf1024CharactersException ex){
+            } catch (ExceedingLimitOf1024CharactersException ex) {
                 System.err.println("Ошибка: " + ex.getMessage());
             }
         }
