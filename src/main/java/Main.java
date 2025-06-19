@@ -2,6 +2,7 @@ import java.io.*;
 import java.util.Scanner;
 
 public class Main {
+
     public static void main(String[] args) {
         int count = 1;
         boolean endlessLoop = true;
@@ -27,15 +28,18 @@ public class Main {
             int countLines = 0;
             int yandexBotCount = 0;
             int googleBotCount = 0;
+            Statistics statistic = new Statistics();
             try (BufferedReader reader = new BufferedReader(new FileReader(path))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
                     countLines++;
+
                     if (line.length() > 1024) {
                         throw new ExceedingLimitOf1024CharactersException();
                     }
-
                     try {
+                        LogEntry logEntry = new LogEntry(line);
+                        statistic.addEntry(logEntry);
                         int lastQuoteIndex = line.lastIndexOf('"');
                         int prevQuoteIndex = line.lastIndexOf('"', lastQuoteIndex - 1);
 
@@ -78,6 +82,10 @@ public class Main {
                             " (" + Math.round((double) yandexBotCount / countLines * 100) + "%)");
                     System.out.println("Запросов от Googlebot: " + googleBotCount +
                             " (" + Math.round((double) googleBotCount / countLines * 100) + "%)");
+                    System.out.println("Общий объем трафика: " + statistic.getTotalTraffic());
+                    System.out.println("Первый запрос: " + statistic.getMinTime());
+                    System.out.println("Последний запрос: " + statistic.getMaxTime());
+                    System.out.println("Средний объем трафика в час: " + String.format("%.2f", statistic.getTrafficRate()));
                 }
 
             } catch (IOException ex) {
