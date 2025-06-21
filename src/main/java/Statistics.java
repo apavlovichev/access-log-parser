@@ -9,8 +9,10 @@ public class Statistics {
     private long totalTraffic;
     private LocalDateTime minTime;
     private LocalDateTime maxTime;
-    HashSet<String> existingSitePage = new HashSet<>();
-    HashMap<String, Integer> osCounts = new HashMap<>();
+    private HashSet<String> existingSitePage = new HashSet<>();
+    private HashSet<String> notFoundPages = new HashSet<>();
+    private HashMap<String, Integer> osCounts = new HashMap<>();
+    private HashMap<String, Integer> browserCounts = new HashMap<>();
 
     public Statistics() {
         this.totalTraffic = 0;
@@ -29,6 +31,8 @@ public class Statistics {
         }
         if (log.getResponseCode() == 200) {
             existingSitePage.add(log.getPath());
+        } else if (log.getResponseCode() == 404) {
+            notFoundPages.add(log.getPath());
         }
         String os = log.getUserAgent().split(",")[0].replace("OS: ", "").trim();
         if (osCounts.containsKey(os)) {
@@ -36,6 +40,13 @@ public class Statistics {
             osCounts.put(os, currentCount + 1);
         } else {
             osCounts.put(os, 1);
+        }
+        String browser = log.getUserAgent().split(",")[1].replace("Browser: ", "").trim();
+        if (browserCounts.containsKey(browser)) {
+            int currentCount = browserCounts.get(browser);
+            browserCounts.put(browser, currentCount + 1);
+        } else {
+            browserCounts.put(browser, 1);
         }
     }
 
@@ -50,6 +61,10 @@ public class Statistics {
 
     public HashSet<String> getExistingPages() {
         return existingSitePage;
+    }
+
+    public HashSet<String> getNotFoundPages() {
+        return new HashSet<>(notFoundPages);
     }
 
     public HashMap<String, Double> getOsStatistics() {
@@ -69,8 +84,27 @@ public class Statistics {
                 osStats.put(entry.getKey(), ratio);
             }
         }
-
         return osStats;
+    }
+
+    public HashMap<String, Double> getBrowserStatistics() {
+        HashMap<String, Double> browserStats = new HashMap<>();
+        int total = 0;
+
+        Iterator<Integer> valueIterator = browserCounts.values().iterator();
+        while (valueIterator.hasNext()) {
+            total += valueIterator.next();
+        }
+
+        if (total > 0) {
+            Iterator<Map.Entry<String, Integer>> entryIterator = browserCounts.entrySet().iterator();
+            while (entryIterator.hasNext()) {
+                Map.Entry<String, Integer> entry = entryIterator.next();
+                double ratio = (double) entry.getValue() / total;
+                browserStats.put(entry.getKey(), ratio);
+            }
+        }
+        return browserStats;
     }
 
     public long getTotalTraffic() {

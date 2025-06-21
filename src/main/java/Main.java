@@ -2,6 +2,7 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
 
 public class Main {
 
@@ -92,9 +93,18 @@ public class Main {
                     for (String page : statistic.getExistingPages()) {
                         System.out.println(page);
                     }
-                    System.out.println("\nСтатистика операционных систем:");
+                    System.out.println("Не существующие страницы сайта:");
+                    for (String page : statistic.getNotFoundPages()) {
+                        System.out.println(page);
+                    }
+                    System.out.println("Статистика операционных систем:");
                     HashMap<String, Double> osStats = statistic.getOsStatistics();
                     for (Map.Entry<String, Double> entry : osStats.entrySet()) {
+                        System.out.printf("%s: %.2f%%\n", entry.getKey(), entry.getValue() * 100);
+                    }
+                    System.out.println("Статистика браузеров:");
+                    HashMap<String, Double> browserStats = statistic.getBrowserStatistics();
+                    for (Map.Entry<String, Double> entry : browserStats.entrySet()) {
                         System.out.printf("%s: %.2f%%\n", entry.getKey(), entry.getValue() * 100);
                     }
                 }
