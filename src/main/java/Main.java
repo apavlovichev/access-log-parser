@@ -1,4 +1,6 @@
 import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
 
 public class Main {
@@ -86,6 +88,15 @@ public class Main {
                     System.out.println("Первый запрос: " + statistic.getMinTime());
                     System.out.println("Последний запрос: " + statistic.getMaxTime());
                     System.out.println("Средний объем трафика в час: " + String.format("%.2f", statistic.getTrafficRate()));
+                    System.out.println("Существующие страницы сайта:");
+                    for (String page : statistic.getExistingPages()) {
+                        System.out.println(page);
+                    }
+                    System.out.println("\nСтатистика операционных систем:");
+                    HashMap<String, Double> osStats = statistic.getOsStatistics();
+                    for (Map.Entry<String, Double> entry : osStats.entrySet()) {
+                        System.out.printf("%s: %.2f%%\n", entry.getKey(), entry.getValue() * 100);
+                    }
                 }
 
             } catch (IOException ex) {

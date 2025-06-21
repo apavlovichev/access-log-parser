@@ -1,10 +1,16 @@
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
 
 public class Statistics {
     private long totalTraffic;
     private LocalDateTime minTime;
     private LocalDateTime maxTime;
+    HashSet<String> existingSitePage = new HashSet<>();
+    HashMap<String, Integer> osCounts = new HashMap<>();
 
     public Statistics() {
         this.totalTraffic = 0;
@@ -21,6 +27,16 @@ public class Statistics {
         if (this.maxTime == null || logTime.isAfter(this.maxTime)) {
             this.maxTime = logTime;
         }
+        if (log.getResponseCode() == 200) {
+            existingSitePage.add(log.getPath());
+        }
+        String os = log.getUserAgent().split(",")[0].replace("OS: ", "").trim();
+        if (osCounts.containsKey(os)) {
+            int currentCount = osCounts.get(os);
+            osCounts.put(os, currentCount + 1);
+        } else {
+            osCounts.put(os, 1);
+        }
     }
 
     public double getTrafficRate() {
@@ -30,6 +46,31 @@ public class Statistics {
         Duration duration = Duration.between(minTime, maxTime);
         double hoursBetween = duration.toSeconds() / 3600.0;
         return (double) totalTraffic / hoursBetween;
+    }
+
+    public HashSet<String> getExistingPages() {
+        return existingSitePage;
+    }
+
+    public HashMap<String, Double> getOsStatistics() {
+        HashMap<String, Double> osStats = new HashMap<>();
+        int total = 0;
+
+        Iterator<Integer> valueIterator = osCounts.values().iterator();
+        while (valueIterator.hasNext()) {
+            total += valueIterator.next();
+        }
+
+        if (total > 0) {
+            Iterator<Map.Entry<String, Integer>> entryIterator = osCounts.entrySet().iterator();
+            while (entryIterator.hasNext()) {
+                Map.Entry<String, Integer> entry = entryIterator.next();
+                double ratio = (double) entry.getValue() / total;
+                osStats.put(entry.getKey(), ratio);
+            }
+        }
+
+        return osStats;
     }
 
     public long getTotalTraffic() {
