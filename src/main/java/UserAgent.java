@@ -34,6 +34,10 @@ public class UserAgent {
         this.os = os;
         this.browser = browser;
     }
+    public boolean isBot(String userAgent) {
+        String userAgentLog = userAgent.toLowerCase();
+        return userAgentLog.contains("bot");
+    }
 
     public String getOs() {
         return os;

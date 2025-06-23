@@ -6,6 +6,8 @@ import java.util.Iterator;
 import java.util.Map;
 
 public class Statistics {
+    private int humanVisitsCount = 0;
+    private int errorRequestsCount = 0;
     private long totalTraffic;
     private LocalDateTime minTime;
     private LocalDateTime maxTime;
@@ -13,6 +15,7 @@ public class Statistics {
     private HashSet<String> notFoundPages = new HashSet<>();
     private HashMap<String, Integer> osCounts = new HashMap<>();
     private HashMap<String, Integer> browserCounts = new HashMap<>();
+    private HashSet<String> humanIpAddresses = new HashSet<>();
 
     public Statistics() {
         this.totalTraffic = 0;
@@ -28,6 +31,14 @@ public class Statistics {
         }
         if (this.maxTime == null || logTime.isAfter(this.maxTime)) {
             this.maxTime = logTime;
+        }
+        boolean isBot = log.isBot();
+        if (!isBot) {
+            humanVisitsCount++;
+            humanIpAddresses.add(log.getIpAddr());
+        }
+        if (log.getResponseCode() >= 400 && log.getResponseCode() < 600) {
+            errorRequestsCount++;
         }
         if (log.getResponseCode() == 200) {
             existingSitePage.add(log.getPath());
@@ -69,17 +80,10 @@ public class Statistics {
 
     public HashMap<String, Double> getOsStatistics() {
         HashMap<String, Double> osStats = new HashMap<>();
-        int total = 0;
-
-        Iterator<Integer> valueIterator = osCounts.values().iterator();
-        while (valueIterator.hasNext()) {
-            total += valueIterator.next();
-        }
+        int total = osCounts.values().stream().mapToInt(Integer::intValue).sum();
 
         if (total > 0) {
-            Iterator<Map.Entry<String, Integer>> entryIterator = osCounts.entrySet().iterator();
-            while (entryIterator.hasNext()) {
-                Map.Entry<String, Integer> entry = entryIterator.next();
+            for (Map.Entry<String, Integer> entry : osCounts.entrySet()) {
                 double ratio = (double) entry.getValue() / total;
                 osStats.put(entry.getKey(), ratio);
             }
@@ -89,22 +93,40 @@ public class Statistics {
 
     public HashMap<String, Double> getBrowserStatistics() {
         HashMap<String, Double> browserStats = new HashMap<>();
-        int total = 0;
-
-        Iterator<Integer> valueIterator = browserCounts.values().iterator();
-        while (valueIterator.hasNext()) {
-            total += valueIterator.next();
-        }
+        int total = browserCounts.values().stream().mapToInt(Integer::intValue).sum();
 
         if (total > 0) {
-            Iterator<Map.Entry<String, Integer>> entryIterator = browserCounts.entrySet().iterator();
-            while (entryIterator.hasNext()) {
-                Map.Entry<String, Integer> entry = entryIterator.next();
+            for (Map.Entry<String, Integer> entry : browserCounts.entrySet()) {
                 double ratio = (double) entry.getValue() / total;
                 browserStats.put(entry.getKey(), ratio);
             }
         }
         return browserStats;
+    }
+
+    public double getAverageVisitsPerHour() {
+        if (minTime == null || maxTime == null || minTime.equals(maxTime)) {
+            return 0.0;
+        }
+        Duration duration = Duration.between(minTime, maxTime);
+        double hoursBetween = duration.toSeconds() / 3600.0;
+        return humanVisitsCount / hoursBetween;
+    }
+
+    public double getAverageErrorRequestsPerHour() {
+        if (minTime == null || maxTime == null || minTime.equals(maxTime)) {
+            return 0.0;
+        }
+        Duration duration = Duration.between(minTime, maxTime);
+        double hoursBetween = duration.toSeconds() / 3600.0;
+        return errorRequestsCount / hoursBetween;
+    }
+
+    public double getAverageVisitsPerUser() {
+        if (humanIpAddresses.isEmpty()) {
+            return 0.0;
+        }
+        return (double) humanVisitsCount / humanIpAddresses.size();
     }
 
     public long getTotalTraffic() {

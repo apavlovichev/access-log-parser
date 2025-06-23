@@ -41,6 +41,10 @@ public class LogEntry {
         return LocalDateTime.parse(dateTimeStr, formatter);
     }
 
+    public boolean isBot() {
+        return userAgent.isBot(userAgent.toString());
+    }
+
     public String getIpAddr() {
         return ipAddr;
     }
