@@ -2,7 +2,6 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 
 public class Statistics {
@@ -16,6 +15,9 @@ public class Statistics {
     private HashMap<String, Integer> osCounts = new HashMap<>();
     private HashMap<String, Integer> browserCounts = new HashMap<>();
     private HashSet<String> humanIpAddresses = new HashSet<>();
+    private HashMap<Long, Integer> visitsPerSecond = new HashMap<>();
+    private HashMap<String, Integer> visitsPerIp = new HashMap<>();
+    private HashSet<String> refererDomains = new HashSet<>();
 
     public Statistics() {
         this.totalTraffic = 0;
@@ -36,6 +38,11 @@ public class Statistics {
         if (!isBot) {
             humanVisitsCount++;
             humanIpAddresses.add(log.getIpAddr());
+            long second = logTime.toEpochSecond(java.time.ZoneOffset.UTC);
+            int countForSecond = visitsPerSecond.getOrDefault(second, 0) + 1;
+            visitsPerSecond.put(second, countForSecond);
+            int countForIp = visitsPerIp.getOrDefault(log.getIpAddr(), 0) + 1;
+            visitsPerIp.put(log.getIpAddr(), countForIp);
         }
         if (log.getResponseCode() >= 400 && log.getResponseCode() < 600) {
             errorRequestsCount++;
@@ -44,6 +51,12 @@ public class Statistics {
             existingSitePage.add(log.getPath());
         } else if (log.getResponseCode() == 404) {
             notFoundPages.add(log.getPath());
+        }
+        if (log.getReferer() != null) {
+            String domain = log.getReferer().replaceFirst("^(https?://)?(www\\.)?([^/]+).*$", "$3");
+            if (!domain.isEmpty()) {
+                refererDomains.add(domain);
+            }
         }
         String os = log.getUserAgent().split(",")[0].replace("OS: ", "").trim();
         if (osCounts.containsKey(os)) {
@@ -61,7 +74,7 @@ public class Statistics {
         }
     }
 
-    public double getTrafficRate() {
+    public double getTrafficRatePerHour() {
         if (minTime == null || maxTime == null || minTime.equals(maxTime)) {
             return 0.0;
         }
@@ -127,6 +140,22 @@ public class Statistics {
             return 0.0;
         }
         return (double) humanVisitsCount / humanIpAddresses.size();
+    }
+
+    public double getPeakVisitsPerSecond() {
+        return (double) visitsPerSecond.values().stream()
+                .max(Integer::compare)
+                .orElse(0);
+    }
+
+    public HashSet<String> getRefererDomains() {
+        return new HashSet<>(refererDomains);
+    }
+
+    public double getMaxVisitsPerUser() {
+        return (double) visitsPerIp.values().stream()
+                .max(Integer::compare)
+                .orElse(0);
     }
 
     public long getTotalTraffic() {

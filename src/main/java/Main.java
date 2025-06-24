@@ -2,7 +2,6 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
-import java.util.Set;
 
 public class Main {
 
@@ -88,7 +87,7 @@ public class Main {
                     System.out.println("Общий объем трафика: " + statistic.getTotalTraffic());
                     System.out.println("Первый запрос: " + statistic.getMinTime());
                     System.out.println("Последний запрос: " + statistic.getMaxTime());
-                    System.out.println("Средний объем трафика в час: " + String.format("%.2f", statistic.getTrafficRate()));
+                    System.out.println("Средний объем трафика в час: " + String.format("%.2f", statistic.getTrafficRatePerHour()));
                     System.out.println("Существующие страницы сайта:");
                     for (String page : statistic.getExistingPages()) {
                         System.out.println(page);
@@ -113,6 +112,11 @@ public class Main {
                             String.format("%.2f", statistic.getAverageErrorRequestsPerHour()));
                     System.out.println("Средняя посещаемость одним пользователем: " +
                             String.format("%.2f", statistic.getAverageVisitsPerUser()));
+                    System.out.println("Максимальная посещаемость одним пользователем): " +
+                            String.format("%.2f", statistic.getMaxVisitsPerUser()));
+                    System.out.println("Пиковая посещаемость (в секунду): " +
+                            String.format("%.2f", statistic.getPeakVisitsPerSecond()));
+                    System.out.println("Список сайтов с ссылками на текущий сайт : " + statistic.getRefererDomains());
                 }
 
             } catch (IOException ex) {
